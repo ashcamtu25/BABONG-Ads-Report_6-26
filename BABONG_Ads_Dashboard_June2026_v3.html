@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BABONG — Ads Performance · Tháng 6/2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg-base:       #1a110d;
+    --bg-card:       #241710;
+    --bg-card-hover: #362117;
+    --bg-muted:      #402E2A;
+    --text-primary:  #E2DCD0;
+    --text-secondary:#c4bdb5;
+    --text-muted:    #9e9089;
+    --accent:        #E2DCD0;
+    --accent-bright: #EEEAE3;
+    --positive:      #7fb98a;
+    --negative:      #c97b6e;
+    --warning:       #c9a96e;
+    --border:        #402E2A;
+    --border-light:  #4d3832;
+    --gold:          #C16836;
+    --font-display:  'Cormorant Garamond', serif;
+    --font-body:     'DM Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg-base); color: var(--text-primary); font-family: var(--font-body); font-size: 15px; line-height: 1.65; min-height: 100vh; }
+
+  /* ── HEADER ── */
+  .header { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 20px 36px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .header-left { display: flex; align-items: baseline; gap: 18px; }
+  .logo { font-family: var(--font-display); font-size: 30px; font-weight: 500; letter-spacing: 0.15em; color: var(--accent-bright); }
+  .header-subtitle { font-size: 13px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .badge { font-size: 12px; padding: 4px 10px; border-radius: 3px; letter-spacing: 0.06em; font-weight: 500; }
+  .badge-mcp { background: rgba(127,185,138,0.15); color: var(--positive); border: 1px solid rgba(127,185,138,0.3); }
+  .badge-csv { background: rgba(193,104,54,0.15); color: var(--gold); border: 1px solid rgba(193,104,54,0.3); }
+  .btn-refresh { background: var(--bg-muted); border: 1px solid var(--border-light); color: var(--text-secondary); padding: 7px 16px; border-radius: 4px; cursor: pointer; font-family: var(--font-body); font-size: 13px; letter-spacing: 0.06em; transition: all 0.2s; }
+  .btn-refresh:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+
+  /* ── LAYOUT ── */
+  .container { max-width: 1400px; margin: 0 auto; padding: 0 36px 36px; }
+  .section-title { font-family: var(--font-display); font-size: 22px; font-weight: 400; color: var(--accent-bright); letter-spacing: 0.08em; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+
+  /* ── TOOLTIP ── */
+  .tip { position: relative; display: inline-block; cursor: help; border-bottom: 1px dashed var(--text-muted); }
+  .tip::after {
+    content: attr(data-tip);
+    position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+    background: #1a110d; color: var(--text-primary); padding: 8px 12px; border-radius: 5px;
+    font-size: 12px; line-height: 1.5; white-space: nowrap; max-width: 280px; white-space: normal;
+    opacity: 0; pointer-events: none; transition: opacity 0.18s; z-index: 999;
+    border: 1px solid var(--border-light); font-family: var(--font-body); font-weight: 400;
+    text-transform: none; letter-spacing: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+  .tip:hover::after { opacity: 1; }
+
+  /* ── TABS ── */
+  .tabs-nav { display: flex; border-bottom: 2px solid var(--border); margin: 0; background: var(--bg-card); padding: 0 36px; position: sticky; top: 73px; z-index: 90; }
+  .tab-btn { padding: 16px 28px; background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-family: var(--font-body); font-size: 14px; font-weight: 500; letter-spacing: 0.04em; position: relative; transition: color 0.2s; white-space: nowrap; }
+  .tab-btn:hover { color: var(--text-secondary); }
+  .tab-btn.active { color: var(--gold); }
+  .tab-btn.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 2px; background: var(--gold); border-radius: 1px 1px 0 0; }
+  .tab-panel { display: none; padding-top: 28px; }
+  .tab-panel.active { display: block; }
+
+  /* ── BENCHMARK (always visible, shared) ── */
+  .bm-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 20px 24px; margin-bottom: 28px; }
+  .bm-title { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; font-weight: 600; }
+  .bm-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .bm-table th { text-align: left; padding: 8px 12px; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); font-weight: 500; border-bottom: 1px solid var(--border); }
+  .bm-table td { padding: 9px 12px; border-bottom: 1px solid rgba(64,46,42,0.25); color: var(--text-secondary); vertical-align: middle; }
+  .bm-table td:first-child { color: var(--text-primary); font-weight: 500; }
+  .bm-good { color: var(--positive); font-weight: 600; }
+  .bm-warn { color: var(--warning); font-weight: 600; }
+  .bm-bad  { color: var(--negative); font-weight: 600; }
+  .bm-new { font-size: 11px; background: rgba(193,104,54,0.12); color: var(--gold); padding: 1px 6px; border-radius: 3px; margin-left: 6px; font-weight: 600; letter-spacing: 0.06em; }
+
+  /* ── EXEC SUMMARY ── */
+  .exec-summary { background: var(--bg-card); border: 1px solid var(--border-light); border-left: 3px solid var(--gold); padding: 26px 32px; border-radius: 6px; margin-bottom: 28px; }
+  .exec-summary h2 { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 20px; }
+  .exec-block { margin-bottom: 18px; }
+  .exec-block-title { font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 7px; }
+  .exec-block-body { color: var(--text-secondary); font-size: 15px; line-height: 1.8; }
+  .exec-block-body strong { color: var(--text-primary); }
+  .exec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 18px; }
+  .exec-mini { background: var(--bg-muted); border-radius: 5px; padding: 14px 18px; }
+  .exec-mini-label { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
+  .exec-mini-val { font-family: var(--font-display); font-size: 26px; color: var(--accent-bright); line-height: 1; }
+  .exec-mini-note { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+  .exec-mini-note.good { color: var(--positive); }
+  .exec-mini-note.warn { color: var(--warning); }
+  .note-box { background: rgba(201,169,110,0.07); border: 1px solid rgba(201,169,110,0.22); border-radius: 4px; padding: 12px 16px; margin-top: 16px; font-size: 14px; color: var(--warning); line-height: 1.65; }
+
+  /* ── KPI CARDS ── */
+  .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 28px; }
+  .kpi-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 20px 22px; }
+  .kpi-label { font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+  .kpi-value { font-family: var(--font-display); font-size: 34px; font-weight: 500; color: var(--accent-bright); line-height: 1; margin-bottom: 4px; }
+  .kpi-sub { font-size: 13px; color: var(--text-muted); }
+  .kpi-vs { font-size: 13px; margin-top: 8px; }
+  .vs-good { color: var(--positive); } .vs-warn { color: var(--warning); } .vs-bad { color: var(--negative); }
+
+  /* ── CONVERSION BOX ── */
+  .conversion-reco { background: rgba(193,104,54,0.06); border: 1px solid rgba(193,104,54,0.2); border-radius: 6px; padding: 20px 24px; margin-bottom: 28px; }
+  .conversion-reco-title { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; font-weight: 600; }
+  .conv-steps { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .conv-step { background: var(--bg-card); border-radius: 5px; padding: 14px 18px; }
+  .conv-step-num { font-family: var(--font-display); font-size: 30px; color: rgba(193,104,54,0.3); line-height: 1; margin-bottom: 4px; }
+  .conv-step-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+  .conv-step-body { font-size: 13px; color: var(--text-secondary); line-height: 1.65; }
+
+  /* ── FILTER TABS ── */
+  .obj-filter { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+  .obj-btn { padding: 8px 20px; border-radius: 4px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-family: var(--font-body); font-size: 14px; cursor: pointer; transition: all 0.2s; }
+  .obj-btn:hover { border-color: var(--border-light); color: var(--text-secondary); }
+  .obj-btn.active { background: var(--bg-muted); border-color: var(--gold); color: var(--gold); font-weight: 500; }
+
+  /* ── TABLES ── */
+  .table-wrap { overflow-x: auto; margin-bottom: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  thead tr { border-bottom: 1px solid var(--border-light); }
+  th { text-align: left; padding: 11px 13px; font-size: 12px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-muted); font-weight: 500; cursor: pointer; user-select: none; white-space: nowrap; }
+  th:hover { color: var(--text-secondary); }
+  td { padding: 12px 13px; border-bottom: 1px solid rgba(64,46,42,0.35); color: var(--text-secondary); vertical-align: middle; }
+  tr:hover td { background: rgba(54,33,23,0.3); }
+  .td-name { color: var(--text-primary); font-weight: 500; }
+  .td-name small { display: block; font-weight: 400; color: var(--text-muted); font-size: 13px; margin-top: 2px; }
+  .status-active { color: var(--positive); font-size: 13px; }
+  .status-paused { color: var(--text-muted); font-size: 13px; }
+  .tag-obj { font-size: 12px; padding: 3px 8px; border-radius: 3px; font-weight: 500; }
+  .tag-traffic { background: rgba(127,185,138,0.12); color: var(--positive); }
+  .tag-engagement { background: rgba(193,104,54,0.12); color: var(--gold); }
+  .vb { font-size: 13px; font-weight: 500; padding: 3px 8px; border-radius: 3px; }
+  .vb-great { background: rgba(127,185,138,0.15); color: var(--positive); }
+  .vb-ok    { background: rgba(201,169,110,0.15); color: var(--warning); }
+  .vb-bad   { background: rgba(201,123,110,0.15); color: var(--negative); }
+  .hidden { display: none !important; }
+  .winner-row td { background: rgba(193,104,54,0.06) !important; }
+  .winner-row td:first-child { border-left: 2px solid var(--gold); }
+
+  /* ── CONCLUSION BOX ── */
+  .conclusion { background: var(--bg-card); border: 1px solid var(--border); border-top: none; border-radius: 0 0 6px 6px; padding: 18px 24px; margin-bottom: 28px; }
+  .conclusion-title { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; font-weight: 600; }
+  .conclusion-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .ci-label { font-size: 12px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px; }
+  .ci-body { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+  .ci-body strong { color: var(--text-primary); }
+  .ci-body.good { color: var(--positive); }
+  .ci-body.warn { color: var(--warning); }
+
+  /* ── CHARTS ── */
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+  .chart-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 22px; }
+  .chart-title { font-size: 13px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 18px; }
+  canvas { max-height: 230px; }
+
+  /* ── DEMO ── */
+  .demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 6px; }
+  .demo-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 22px; }
+  .demo-bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 11px; }
+  .demo-label { font-size: 14px; color: var(--text-secondary); min-width: 54px; }
+  .demo-bar-outer { flex: 1; height: 7px; background: var(--bg-muted); border-radius: 3px; overflow: hidden; }
+  .demo-bar-inner { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--gold), #E2C09A); }
+  .demo-val { font-size: 13px; color: var(--text-primary); min-width: 100px; text-align: right; }
+  .demo-val span { font-size: 12px; color: var(--text-muted); }
+
+  /* ── ALERTS ── */
+  .alert-grid { display: grid; gap: 10px; margin-bottom: 28px; }
+  .alert { display: flex; align-items: flex-start; gap: 14px; padding: 15px 18px; border-radius: 5px; font-size: 14px; }
+  .alert-good { background: rgba(127,185,138,0.07); border: 1px solid rgba(127,185,138,0.22); }
+  .alert-warn { background: rgba(201,169,110,0.07); border: 1px solid rgba(201,169,110,0.22); }
+  .alert-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .alert-text { color: var(--text-secondary); line-height: 1.7; }
+  .alert-text strong { color: var(--text-primary); }
+
+  /* ── RECOS ── */
+  .reco-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+  .reco-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 20px 24px; }
+  .reco-num { font-family: var(--font-display); font-size: 40px; color: rgba(193,104,54,0.25); font-weight: 300; line-height: 1; margin-bottom: 8px; }
+  .reco-title { color: var(--text-primary); font-weight: 600; font-size: 15px; margin-bottom: 10px; }
+  .reco-body { color: var(--text-secondary); font-size: 14px; line-height: 1.75; }
+  .reco-impact { margin-top: 12px; font-size: 13px; font-weight: 600; }
+  .impact-high { color: var(--positive); }
+  .impact-med  { color: var(--warning); }
+
+  /* ── COLLAPSIBLE ── */
+  .coll-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; margin-bottom: 8px; transition: background 0.2s; }
+  .coll-header:hover { background: var(--bg-card-hover); }
+  .coll-title { font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+  .coll-arrow { color: var(--text-muted); font-size: 13px; transition: transform 0.2s; }
+  .coll-arrow.open { transform: rotate(180deg); }
+  .coll-body { background: var(--bg-card); border: 1px solid var(--border); border-top: none; border-radius: 0 0 6px 6px; padding: 18px 22px; display: none; margin-bottom: 16px; font-size: 14px; color: var(--text-secondary); line-height: 1.75; }
+  .coll-body.open { display: block; }
+
+  /* ── DM FUNNEL ── */
+  .funnel-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 24px; margin-bottom: 28px; }
+  .funnel-title { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); margin-bottom: 20px; font-weight: 600; }
+  .funnel { display: flex; align-items: stretch; gap: 0; }
+  .funnel-step { flex: 1; text-align: center; position: relative; }
+  .funnel-step + .funnel-step::before { content: '→'; position: absolute; left: -12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 18px; }
+  .funnel-box { background: var(--bg-muted); border-radius: 6px; padding: 16px 12px; margin: 0 8px; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .funnel-val { font-family: var(--font-display); font-size: 28px; color: var(--accent-bright); line-height: 1; margin-bottom: 4px; }
+  .funnel-label { font-size: 12px; color: var(--text-muted); letter-spacing: 0.06em; text-align: center; }
+  .funnel-pct { font-size: 13px; color: var(--warning); margin-top: 6px; font-weight: 600; }
+  .funnel-box.highlight { background: rgba(193,104,54,0.15); border: 1px solid rgba(193,104,54,0.3); }
+  .funnel-box.alert-box { background: rgba(127,185,138,0.1); border: 1px solid rgba(127,185,138,0.25); }
+  .funnel-box.warn-box  { background: rgba(201,169,110,0.1); border: 1px solid rgba(201,169,110,0.25); }
+  .funnel-gap { background: rgba(201,123,110,0.07); border: 1px solid rgba(201,123,110,0.2); border-radius: 5px; padding: 14px 18px; margin-top: 20px; font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+  .funnel-gap strong { color: var(--negative); }
+
+  /* ── FOOTER ── */
+  .footer { text-align: center; padding: 28px; color: var(--text-muted); font-size: 13px; letter-spacing: 0.05em; border-top: 1px solid var(--border); margin-top: 20px; }
+
+  @media (max-width: 1000px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid, .demo-grid, .reco-grid, .conclusion-grid, .exec-grid, .conv-steps { grid-template-columns: 1fr; }
+    .funnel { flex-direction: column; gap: 8px; }
+    .funnel-step + .funnel-step::before { content: '↓'; left: 50%; top: -16px; transform: translateX(-50%); }
+  }
+  @media (max-width: 640px) {
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .container { padding: 0 16px 24px; }
+    .header { padding: 14px 16px; flex-wrap: wrap; gap: 10px; }
+    .tabs-nav { padding: 0 8px; overflow-x: auto; }
+    .tab-btn { padding: 12px 16px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header class="header">
+  <div class="header-left">
+    <span class="logo">BABONG</span>
+    <span class="header-subtitle">Ads Performance · Tháng 6 / 2026 · 27/06</span>
+  </div>
+  <div class="header-right">
+    <span class="badge badge-mcp">Meta MCP Live ✓</span>
+    <span class="badge badge-csv">CSV 01–27/06 ✓</span>
+    <button class="btn-refresh" onclick="handleRefresh()">↻ Cập nhật</button>
+  </div>
+</header>
+
+<!-- ══ TAB NAVIGATION ══ -->
+<nav class="tabs-nav">
+  <button class="tab-btn active" onclick="switchTab('overview', this)">A · Tóm tắt tổng quan</button>
+  <button class="tab-btn" onclick="switchTab('awareness', this)">B · Hiệu suất Chiến dịch — Awareness &amp; Traffic</button>
+  <button class="tab-btn" onclick="switchTab('dm', this)">C · Chiến dịch DM — Warm Audience</button>
+</nav>
+
+<div class="container">
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- BENCHMARK TABLE — hiển thị ở mọi tab            -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="bm-wrap" style="margin-top:28px">
+  <div class="bm-title">📐 Benchmark KPI — Vietnam Luxury Jewelry · Phase 1 (cập nhật tháng 6/2026)</div>
+  <table class="bm-table">
+    <thead>
+      <tr>
+        <th>Chỉ số</th>
+        <th><span class="tip" data-tip="Chi phí tốt — dưới mức này là xuất sắc">Tốt ✓</span></th>
+        <th><span class="tip" data-tip="Chi phí chấp nhận được — trong ngưỡng bình thường của ngành">Chấp nhận ⚠</span></th>
+        <th><span class="tip" data-tip="Chi phí cần xem lại — cao hơn mức bình thường ngành">Cần xem lại ✗</span></th>
+        <th>BABONG Tháng 6</th>
+        <th>Đánh giá</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="tip" data-tip="Chi phí tiếp cận 1.000 người — thấp hơn benchmark có nghĩa là quảng cáo của bạn đang được Meta ưu ái vì chất lượng tốt">CPM — Chi phí 1.000 người (₫)</span></td>
+        <td>< ₫70.000</td><td>₫70K–180K</td><td>> ₫180K</td>
+        <td>₫20K–44K (Awareness) · ₫64K (DM)</td>
+        <td><span class="bm-good">✓ Xuất sắc</span></td>
+      </tr>
+      <tr>
+        <td><span class="tip" data-tip="Chi phí cho mỗi lượt click vào quảng cáo — thấp hơn benchmark nhiều có nghĩa là người xem đang rất hứng thú với nội dung">CPC — Chi phí / click (₫)</span></td>
+        <td>< ₫5.000</td><td>₫5K–30K</td><td>> ₫30K</td>
+        <td>₫845–₫1.333 (Awareness) · ₫10.356 (DM)</td>
+        <td><span class="bm-good">✓ Xuất sắc</span></td>
+      </tr>
+      <tr>
+        <td><span class="tip" data-tip="Tỉ lệ người xem quảng cáo rồi click vào — càng cao có nghĩa là quảng cáo càng hấp dẫn đúng đối tượng">CTR — Tỉ lệ click (%)</span></td>
+        <td>> 2,5%</td><td>0,8–2,5%</td><td>< 0,8%</td>
+        <td>2,36–4,68% (Awareness) · 0,62% (DM — bình thường)</td>
+        <td><span class="bm-good">✓ Tốt</span></td>
+      </tr>
+      <tr style="background:rgba(193,104,54,0.04)">
+        <td><span class="tip" data-tip="Chi phí để có 1 người click vào xem profile Instagram/Facebook BABONG — đây là bước đầu tiên trong hành trình mua hàng">Cost / Profile Visit — <span class="bm-new">MỚI</span></span></td>
+        <td>< ₫1.000</td><td>₫1K–₫2K</td><td>> ₫2.000</td>
+        <td>₫693–₫1.166</td>
+        <td><span class="bm-good">✓ Tốt → Chấp nhận</span></td>
+      </tr>
+      <tr style="background:rgba(193,104,54,0.04)">
+        <td><span class="tip" data-tip="Chi phí để có 1 người chủ động nhắn tin hỏi mua hàng — đây là hot lead, người đang ở giai đoạn gần mua nhất">Cost / New Message Contact — <span class="bm-new">MỚI</span></span></td>
+        <td>< ₫30.000</td><td>₫30K–₫60K</td><td>> ₫60.000</td>
+        <td>₫29.268–₫36.943</td>
+        <td><span class="bm-warn">⚠ Chấp nhận — cần tối ưu</span></td>
+      </tr>
+      <tr>
+        <td><span class="tip" data-tip="Số lần trung bình mỗi người thấy cùng 1 quảng cáo. Khi vượt 3,0 người bắt đầu nhàm chán và bỏ qua quảng cáo">Frequency — Tần suất xem / người</span></td>
+        <td>< 2,0</td><td>2,0–3,0</td><td>> 3,0</td>
+        <td>1,1–1,5 (Awareness) · <strong style="color:var(--warning)">2,51 (DM)</strong></td>
+        <td><span class="bm-warn">⚠ DM cần theo dõi</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- TAB A: TÓM TẮT TỔNG QUAN                        -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="tab-panel active" id="tab-overview">
+
+  <!-- Executive Summary -->
+  <div class="exec-summary">
+    <h2>Tóm tắt tổng quan — Tháng 6/2026 · Toàn bộ tháng · 01–27/06</h2>
+
+    <div class="exec-block">
+      <div class="exec-block-title">Tháng 6 BABONG đã làm gì?</div>
+      <div class="exec-block-body">
+        Tháng 6 là tháng <strong>đầu tiên BABONG chạy ads bài bản</strong>, chia 2 mục tiêu song song: (1) <strong>Awareness</strong> — giới thiệu thương hiệu đến cold audience mới hoàn toàn; (2) <strong>DM Warm</strong> — biến người đã biết BABONG thành khách hàng có tiếp xúc trực tiếp. Tổng cộng 5 campaign với tổng chi <strong>₫4.881.264</strong> từ 07/06 đến 27/06.
+      </div>
+    </div>
+
+    <div class="exec-block">
+      <div class="exec-block-title">Kết quả tháng 6 — diễn giải đơn giản</div>
+      <div class="exec-block-body">
+        Hãy tưởng tượng BABONG đặt biển quảng cáo trước <strong>~70.000 người</strong>. Trong số đó:<br>
+        → <strong>2.581 người</strong> dừng lại, click vào profile để xem thêm — tương đương "ghé cửa hàng"<br>
+        → <strong>67 người</strong> chủ động nhắn tin hỏi mua — đây là hot leads thật sự<br>
+        → <strong>5 đơn hàng</strong> được chốt từ 67 tin nhắn đó (tỉ lệ 7,5%)<br>
+        → <strong>~195 người</strong> follow Instagram BABONG mới từ quảng cáo
+      </div>
+    </div>
+
+    <div class="exec-grid">
+      <div class="exec-mini">
+        <div class="exec-mini-label">Chi phí tiếp cận 1.000 người (CPM Awareness)</div>
+        <div class="exec-mini-val">₫20K–44K</div>
+        <div class="exec-mini-note good">✓ Benchmark: ₫70K–180K — mua reach rẻ hơn ngành 3–4 lần</div>
+      </div>
+      <div class="exec-mini">
+        <div class="exec-mini-label">Chi phí 1 khách hàng nhắn tin (DM)</div>
+        <div class="exec-mini-val">₫36.943</div>
+        <div class="exec-mini-note warn">⚠ Benchmark: ₫30K–60K — chấp nhận được, cần tối ưu thêm</div>
+      </div>
+      <div class="exec-mini">
+        <div class="exec-mini-label">Chiến dịch Awareness hiệu quả nhất</div>
+        <div class="exec-mini-val">Teaser Gốc</div>
+        <div class="exec-mini-note good">✓ CTR 4,68% · CPR ₫798/lượt ghé cửa hàng</div>
+      </div>
+      <div class="exec-mini">
+        <div class="exec-mini-label">Cảnh báo: Frequency DM campaign</div>
+        <div class="exec-mini-val">2,51 / 3,0</div>
+        <div class="exec-mini-note warn">⚠ Gần ngưỡng nhàm chán — cần đổi creative trong 7–10 ngày</div>
+      </div>
+    </div>
+
+    <div class="note-box">
+      📌 Data từ Meta MCP (live) đối chiếu với CSV Export 01–27/06 — sai lệch < 0,1%, hai nguồn nhất quán. 5 campaigns: Teaser (đã dừng), Teaser Copy (đang chạy), Brand Intro (đã dừng), Brand Intro Copy (đã dừng), DM Warm Audience (đang chạy).
+    </div>
+  </div>
+
+  <!-- KPI Cards — 6 cards, 3×2 -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label"><span class="tip" data-tip="Tổng tiền đã chi cho tất cả 5 campaigns từ 01/06 đến 27/06">Tổng chi tiêu</span></div>
+      <div class="kpi-value">₫4,88M</div>
+      <div class="kpi-sub">₫4.881.264 VND · 5 campaigns</div>
+      <div class="kpi-vs">₫2,41M Awareness + ₫2,47M DM</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label"><span class="tip" data-tip="Ước tính số người không trùng lặp đã thấy quảng cáo BABONG — tổng từng campaign riêng lẻ từ Meta MCP">Reach (ước tính)</span></div>
+      <div class="kpi-value">~70K</div>
+      <div class="kpi-sub">người tiếp cận · MCP</div>
+      <div class="kpi-vs">110.323 lượt hiển thị tổng cộng</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label"><span class="tip" data-tip="CTR trung bình của các campaign Awareness và Traffic — không tính DM vì khác objective. Benchmark ngành: 0,8–2,5%">CTR Awareness trung bình</span></div>
+      <div class="kpi-value">3,08%</div>
+      <div class="kpi-sub">Teaser + Teaser Copy + Brand Intro</div>
+      <div class="kpi-vs vs-good">↑ Vượt benchmark 0,8–2,5%</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label"><span class="tip" data-tip="Số người chủ động nhắn tin hỏi mua hàng từ quảng cáo DM. Chi phí để có 1 người nhắn tin: ₫36.943 — trong ngưỡng benchmark ₫30K–60K">New Messaging Contacts</span></div>
+      <div class="kpi-value">67</div>
+      <div class="kpi-sub">hot leads từ DM campaign</div>
+      <div class="kpi-vs vs-warn">Cost/msg ₫36.943 · Benchmark: ₫30K–60K</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label"><span class="tip" data-tip="Số đơn hàng được chốt từ 67 tin nhắn DM. Tỉ lệ chuyển đổi 7,5% — cần cải thiện lên 15–20% để tối ưu ROI của DM campaign">Chuyển đổi DM → Đơn hàng</span></div>
+      <div class="kpi-value">7,5%</div>
+      <div class="kpi-sub">5 đơn / 67 tin nhắn</div>
+      <div class="kpi-vs vs-warn">⚠ Mục tiêu: > 15–20% · Cần cải thiện</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label"><span class="tip" data-tip="Tần suất xem quảng cáo của DM campaign — cao nhất account. Ngưỡng nguy hiểm là 3,0. Awareness campaigns đang rất an toàn ở 1,1–1,5">Frequency cao nhất (DM)</span></div>
+      <div class="kpi-value">2,51</div>
+      <div class="kpi-sub">DM campaign · Awareness: 1,1–1,5</div>
+      <div class="kpi-vs vs-warn">⚠ Đổi creative trong 7–10 ngày</div>
+    </div>
+  </div>
+
+  <!-- Conversion Improvement Box -->
+  <div class="conversion-reco">
+    <div class="conversion-reco-title">💬 Cải thiện tỉ lệ chuyển đổi từ tin nhắn → đơn hàng (hiện tại 7,5% → mục tiêu 15–20%)</div>
+    <div class="conv-steps">
+      <div class="conv-step">
+        <div class="conv-step-num">01</div>
+        <div class="conv-step-title">Phản hồi trong 30 phút — yếu tố #1</div>
+        <div class="conv-step-body">Người nhắn tin qua quảng cáo đang ở trạng thái "muốn mua ngay". Cửa sổ hứng thú này chỉ kéo dài vài giờ. Phản hồi sau 2–3 tiếng thì 60–70% đã nguội. Thiết lập thông báo tức thì và quy trình trả lời trong vòng 30 phút giờ hành chính.</div>
+      </div>
+      <div class="conv-step">
+        <div class="conv-step-num">02</div>
+        <div class="conv-step-title">Script đủ thông tin, không quá formal</div>
+        <div class="conv-step-body">Tin nhắn đầu tiên nên gửi ngay: tên sản phẩm + giá thật + 2–3 ảnh thực tế (không phải ảnh lookbook) + câu hỏi mở: <em>"Bạn đang tìm nhẫn/vòng/dây cho dịp gì?"</em> Tránh copy dập khuôn — người mua trang sức mid-high end cảm nhận được sự chăm sóc cá nhân.</div>
+      </div>
+      <div class="conv-step">
+        <div class="conv-step-num">03</div>
+        <div class="conv-step-title">Follow-up sau 24–48h nếu chưa phản hồi</div>
+        <div class="conv-step-body">70% khách hàng jewelry cần 2–3 lần tiếp xúc trước khi quyết định. Sau 24h không có phản hồi: gửi 1 ảnh sản phẩm từ góc khác + thông tin chất liệu/xuất xứ. Sau 48h: gửi đề xuất gặp trực tiếp hoặc xem tại showroom.</div>
+      </div>
+      <div class="conv-step">
+        <div class="conv-step-num">04</div>
+        <div class="conv-step-title">Tạo urgency thật, không fake</div>
+        <div class="conv-step-body">Người mua trang sức mid-high end rất nhạy cảm với scarcity giả tạo. Nếu sản phẩm thật sự limited (số lượng có hạn, mẫu thiết kế đặc biệt, nguyên liệu theo mùa) — thông báo thật. Urgency thật = tốt. Urgency giả tạo = mất trust vĩnh viễn với nhóm khách hàng này.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="section-title">Biểu đồ tổng quan</div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">CTR theo Campaign (%) — Awareness vs DM · Benchmark 2,5%</div>
+      <canvas id="ctrChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Phân bổ Spend — Tháng 6/2026 · Tổng ₫4.881.264</div>
+      <canvas id="spendChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Demographic -->
+  <div class="section-title">Phân tích theo Đối tượng <span style="font-size:13px;color:var(--gold);font-family:var(--font-body)">[CSV] · Toàn bộ 5 campaigns · 01–27/06</span></div>
+  <p style="color:var(--text-muted);font-size:14px;margin-bottom:18px;">Target cốt lõi của BABONG: <strong style="color:var(--gold)">23–35 tuổi</strong>. Dữ liệu dưới đây bao gồm tất cả campaigns — kể cả DM.</p>
+
+  <div class="demo-grid">
+    <!-- AGE -->
+    <div class="demo-card">
+      <div class="chart-title">Phân bổ Spend theo Độ tuổi</div>
+      <div class="demo-bar-row">
+        <div class="demo-label">18–24</div>
+        <div class="demo-bar-outer"><div class="demo-bar-inner" style="width:16%"></div></div>
+        <div class="demo-val">₫779.209 <span>· CTR 2,12% · CPR ₫1.647</span></div>
+      </div>
+      <div class="demo-bar-row">
+        <div class="demo-label" style="color:var(--gold)">25–34 ⚠</div>
+        <div class="demo-bar-outer"><div class="demo-bar-inner" style="width:57%"></div></div>
+        <div class="demo-val" style="color:var(--warning)">₫2.797.596 <span>· CTR 2,17% · CPR ₫1.965</span></div>
+      </div>
+      <div class="demo-bar-row">
+        <div class="demo-label">35–44</div>
+        <div class="demo-bar-outer"><div class="demo-bar-inner" style="width:20%"></div></div>
+        <div class="demo-val">₫986.875 <span>· CTR 2,35% · CPR ₫2.104</span></div>
+      </div>
+      <div class="demo-bar-row">
+        <div class="demo-label">45–54</div>
+        <div class="demo-bar-outer"><div class="demo-bar-inner" style="width:4%"></div></div>
+        <div class="demo-val">₫207.481 <span>· CTR 2,36% · CPR ₫1.596</span></div>
+      </div>
+      <div class="demo-bar-row">
+        <div class="demo-label" style="color:var(--positive)">55–64 ✓</div>
+        <div class="demo-bar-outer"><div class="demo-bar-inner" style="width:1%"></div></div>
+        <div class="demo-val" style="color:var(--positive)">₫57.589 <span>· CTR 3,31% · CPR ₫613</span></div>
+      </div>
+
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border)">
+        <p style="font-size:13px;color:var(--text-muted);line-height:1.7"><strong style="color:var(--warning)">Nghịch lý:</strong> Nhóm 25–34 nhận 57% budget nhưng có CPR ₫1.965 — cao nhất account. Không phải target sai người, mà content chưa đủ sắc nét với tư duy creative của họ. <strong style="color:var(--text-primary)">Gợi ý: Reels dạng narrative 20–30s, không script thương mại.</strong></p>
+      </div>
+    </div>
+
+    <!-- GENDER -->
+    <div class="demo-card">
+      <div class="chart-title">Hiệu suất theo Giới tính</div>
+      <table style="width:100%;font-size:14px;border-collapse:collapse">
+        <thead><tr>
+          <th style="text-align:left;padding:8px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border)">Giới tính</th>
+          <th style="text-align:right;padding:8px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border)">Spend</th>
+          <th style="text-align:right;padding:8px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border)">% Budget</th>
+          <th style="text-align:right;padding:8px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border)">CTR</th>
+          <th style="text-align:right;padding:8px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border)">CPR</th>
+          <th style="text-align:right;padding:8px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border)">New Msgs</th>
+        </tr></thead>
+        <tbody>
+          <tr>
+            <td style="padding:11px 8px;color:var(--text-primary);font-weight:500">Nữ</td>
+            <td style="text-align:right;padding:11px 8px">₫3.794.087</td>
+            <td style="text-align:right;padding:11px 8px">78%</td>
+            <td style="text-align:right;padding:11px 8px">2,25%</td>
+            <td style="text-align:right;padding:11px 8px;color:var(--negative)">₫2.145</td>
+            <td style="text-align:right;padding:11px 8px">72</td>
+          </tr>
+          <tr style="background:rgba(127,185,138,0.05)">
+            <td style="padding:11px 8px;color:var(--positive);font-weight:500">Nam ✓ hiệu quả hơn</td>
+            <td style="text-align:right;padding:11px 8px">₫1.023.368</td>
+            <td style="text-align:right;padding:11px 8px">21%</td>
+            <td style="text-align:right;padding:11px 8px">2,18%</td>
+            <td style="text-align:right;padding:11px 8px;color:var(--positive)">₫1.220</td>
+            <td style="text-align:right;padding:11px 8px">8</td>
+          </tr>
+        </tbody>
+      </table>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+        <p style="font-size:13px;color:var(--text-secondary);line-height:1.7"><strong style="color:var(--positive)">Nam giới</strong>: chỉ 21% budget nhưng CPR ₫1.220 — tốt hơn nữ 43%. Đây rất có thể là nhóm <em>mua quà tặng</em>. Đề xuất test creative riêng với angle <em>"Quà tặng cho người có gu thẩm mỹ rõ ràng"</em> — có thể mở ra revenue stream mới với chi phí thấp hơn nhiều.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONCLUSION: DEMOGRAPHIC -->
+  <div class="conclusion">
+    <div class="conclusion-title">📊 Kết luận — Phân tích Đối tượng</div>
+    <div class="conclusion-grid">
+      <div>
+        <div class="ci-label">Core TA 25–34: cần đổi cách nói chuyện</div>
+        <div class="ci-body warn"><strong>57% budget → CPR ₫1.965.</strong> Không phải target sai — mà content chưa khớp tư duy nhóm 23–35 creative-forward. Thử Reels narrative 20s, không voiceover thương mại, visual raw/authentic hơn.</div>
+      </div>
+      <div>
+        <div class="ci-label">Nam giới — hidden opportunity</div>
+        <div class="ci-body"><strong>CPR ₫1.220 với 21% budget.</strong> Hiệu quả hơn nữ 43%. Segment mua quà tặng chưa được khai thác. Test creative riêng ₫30K/ngày trong 2 tuần — chi phí thấp, upside cao.</div>
+      </div>
+      <div>
+        <div class="ci-label">55–64: micro insight đáng chú ý</div>
+        <div class="ci-body"><strong>CTR 3,31% — CPR ₫613.</strong> Chỉ 1% budget nhưng kết quả xuất sắc nhất. Nhóm này có purchasing power cao, ít bị quảng cáo cạnh tranh. Cần xác nhận có thật sự mua hay không trước khi scale.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALERTS -->
+  <div class="section-title">Cảnh báo &amp; Tín hiệu quan trọng</div>
+  <div class="alert-grid">
+    <div class="alert alert-good">
+      <div class="alert-icon">✦</div>
+      <div class="alert-text"><strong>CPM Awareness thấp hơn benchmark ngành 60–72% — tín hiệu account đang "được yêu thích" bởi Meta.</strong> CPM ₫20K–44K trong khi benchmark ₫70K–180K cho thấy Meta đang phân phối quảng cáo BABONG với giá ưu đãi. Dấu hiệu của creative quality cao và audience relevance tốt. Duy trì chất lượng creative để giữ CPM thấp khi scale.</div>
+    </div>
+    <div class="alert alert-good">
+      <div class="alert-icon">✦</div>
+      <div class="alert-text"><strong>Teaser Copy đang active và perform tốt — đây là engine awareness duy nhất đang chạy.</strong> CTR 3,18% với ₫1,05M chi trong 10 ngày — tốc độ và hiệu quả hợp lý. Campaign này cần được duy trì và test thêm creative mới để tìm angle có thể đẩy CTR lên > 4% như Teaser gốc.</div>
+    </div>
+    <div class="alert alert-warn">
+      <div class="alert-icon">⚠</div>
+      <div class="alert-text"><strong>DM campaign Frequency 2,51 — cần đổi creative trong 7–10 ngày tới.</strong> Warm audience của BABONG có giới hạn người. Khi mỗi người đã thấy 2,5 lần mà chưa nhắn tin, lần thứ 3+ sẽ gây phản tác dụng và đẩy cost/message lên cao. Chuẩn bị 2–3 creative video mới cho DM ngay tuần này.</div>
+    </div>
+    <div class="alert alert-warn">
+      <div class="alert-icon">⚠</div>
+      <div class="alert-text"><strong>DM sub-campaign "Warm – Copy" và "Warm – Copy 2" đang lãng phí ~₫366K.</strong> "Warm – Copy" có cost/msg ₫62.117 — gấp đôi mức "Tốt" và đang cạnh tranh với ad set chính. "Warm – Copy 2" chi ₫55.789 nhưng 0 tin nhắn. Tắt cả hai ngay — chuyển budget về ad set "Warm" chính và "Warm – 18-24" (cost/msg ₫29.268 — tốt nhất account).</div>
+    </div>
+  </div>
+
+  <!-- NEXT STEPS -->
+  <div class="section-title">Next Steps — Ưu tiên cao nhất trước · Tháng 7/2026</div>
+  <div class="reco-grid">
+    <div class="reco-card">
+      <div class="reco-num">01</div>
+      <div class="reco-title">Đổi creative DM ngay — Frequency 2,51 sắp chạm ngưỡng nguy hiểm</div>
+      <div class="reco-body">Tạo 2 video mới cho DM campaign: (1) "Một ngày trong xưởng BABONG" — process đằng sau, âm thanh tự nhiên; (2) "Người đặt chiếc nhẫn đầu tiên" — câu chuyện khách hàng thật. Format 15–20s Reels. Không có script thương mại, không voiceover.</div>
+      <div class="reco-impact"><span class="impact-high">→ KHẨN CẤP · Làm trong tuần này</span></div>
+    </div>
+    <div class="reco-card">
+      <div class="reco-num">02</div>
+      <div class="reco-title">Tắt "Warm – Copy" và "Warm – Copy 2" — tiết kiệm ₫366K ngay</div>
+      <div class="reco-body">Warm – Copy: cost/msg ₫62.117 (gấp đôi benchmark tốt). Warm – Copy 2: 0 tin nhắn sau ₫55.789 chi. Tắt cả hai, chuyển toàn bộ về ad set "Warm" chính và "Warm – 18-24". Kết quả thấy ngay sau 48 giờ.</div>
+      <div class="reco-impact"><span class="impact-high">→ CAO · Tiết kiệm chi phí ngay</span></div>
+    </div>
+    <div class="reco-card">
+      <div class="reco-num">03</div>
+      <div class="reco-title">Scale "Warm – 18-24" trong DM — cost/msg thấp nhất (₫29.268)</div>
+      <div class="reco-body">Nhóm 18–24 có cost/msg ₫29.268 — dưới benchmark "Tốt" (< ₫30K). Tăng budget gấp đôi trong 7 ngày, xem cost/msg có giữ nguyên không. Nếu vẫn < ₫35K → đây là segment gold của BABONG cho DM.</div>
+      <div class="reco-impact"><span class="impact-high">→ CAO · Quick win</span></div>
+    </div>
+    <div class="reco-card">
+      <div class="reco-num">04</div>
+      <div class="reco-title">Thiết lập Retargeting — 2.581 người đã ghé "cửa hàng" chưa nhắn tin</div>
+      <div class="reco-body">Từ Awareness campaigns, 2.581 người đã click vào profile — nhóm "warm nhưng chưa sẵn sàng". Tạo retargeting campaign cho người xem profile trong 30–60 ngày. Format: carousel sản phẩm + giá thật. Budget thử: ₫50K/ngày.</div>
+      <div class="reco-impact"><span class="impact-high">→ CAO · Tận dụng audience đã sẵn có</span></div>
+    </div>
+    <div class="reco-card">
+      <div class="reco-num">05</div>
+      <div class="reco-title">Cải thiện quy trình phản hồi DM — từ 7,5% lên 15–20%</div>
+      <div class="reco-body">5 đơn từ 67 tin nhắn là tỉ lệ thấp. Thiết lập: (1) Alert tức thì khi có tin nhắn mới; (2) Script phản hồi trong 30 phút với ảnh thật + giá; (3) Follow-up tự động sau 24h nếu chưa trả lời. Không cần tool đắt tiền — chỉ cần quy trình nhất quán.</div>
+      <div class="reco-impact"><span class="impact-high">→ CAO · Ảnh hưởng trực tiếp doanh thu</span></div>
+    </div>
+    <div class="reco-card">
+      <div class="reco-num">06</div>
+      <div class="reco-title">Test Reels narrative cho nhóm 25–34 — Đổi cách nói chuyện</div>
+      <div class="reco-body">Core TA hiện có CPR ₫1.965 — quá cao. Thử 1 Reel 20–30s: visual workshop/người đeo trang sức trong bối cảnh đời thường, âm thanh tự nhiên, không có text thương mại. Budget test: ₫100K cho 7 ngày. Nếu CTR > 4% → scale.</div>
+      <div class="reco-impact"><span class="impact-high">→ CAO · Ảnh hưởng 57% budget</span></div>
+    </div>
+  </div>
+
+  <!-- BONUS COLLAPSIBLES -->
+  <div class="section-title">Phân tích bổ sung</div>
+
+  <div class="coll-header" onclick="toggleColl(this)">
+    <span class="coll-title">💰 Budget Pacing — Tốc độ chi tiêu theo campaign</span>
+    <span class="coll-arrow">▼</span>
+  </div>
+  <div class="coll-body">
+    <table style="width:100%;font-size:14px;border-collapse:collapse">
+      <thead><tr>
+        <th style="text-align:left;padding:8px 12px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border)">Campaign</th>
+        <th style="padding:8px 12px;font-size:12px;color:var(--text-muted);text-align:center;border-bottom:1px solid var(--border)">Ngày chạy</th>
+        <th style="padding:8px 12px;font-size:12px;color:var(--text-muted);text-align:center;border-bottom:1px solid var(--border)">Đã chi</th>
+        <th style="padding:8px 12px;font-size:12px;color:var(--text-muted);text-align:center;border-bottom:1px solid var(--border)">Trung bình/ngày</th>
+        <th style="padding:8px 12px;font-size:12px;color:var(--text-muted);text-align:center;border-bottom:1px solid var(--border)">Trạng thái</th>
+      </tr></thead>
+      <tbody>
+        <tr><td style="padding:10px 12px;color:var(--text-primary)">Teaser Gốc</td><td style="text-align:center;padding:10px 12px">07–11/06 (5 ngày)</td><td style="text-align:center;padding:10px 12px">₫771.310</td><td style="text-align:center;padding:10px 12px">₫154.262/ngày</td><td style="text-align:center;padding:10px 12px;color:var(--text-muted)">Hoàn thành ✓</td></tr>
+        <tr style="background:rgba(64,46,42,0.2)"><td style="padding:10px 12px;color:var(--positive)">Teaser Copy</td><td style="text-align:center;padding:10px 12px">17–27/06 (10 ngày)</td><td style="text-align:center;padding:10px 12px">₫1.051.540</td><td style="text-align:center;padding:10px 12px">₫105.154/ngày</td><td style="text-align:center;padding:10px 12px;color:var(--positive)">Active ✓</td></tr>
+        <tr><td style="padding:10px 12px;color:var(--warning)">DM Warm</td><td style="text-align:center;padding:10px 12px">14–27/06 (13 ngày)</td><td style="text-align:center;padding:10px 12px">₫2.475.168</td><td style="text-align:center;padding:10px 12px">₫190.397/ngày</td><td style="text-align:center;padding:10px 12px;color:var(--positive)">Active ✓</td></tr>
+        <tr><td style="padding:10px 12px;color:var(--text-secondary)">Brand Intro</td><td style="text-align:center;padding:10px 12px">12–27/06 (15 ngày)</td><td style="text-align:center;padding:10px 12px">₫261.257</td><td style="text-align:center;padding:10px 12px">₫17.417/ngày</td><td style="text-align:center;padding:10px 12px;color:var(--text-muted)">Đã dừng</td></tr>
+        <tr><td style="padding:10px 12px;color:var(--text-secondary)">Brand Intro Copy</td><td style="text-align:center;padding:10px 12px">12–27/06 (~15 ngày)</td><td style="text-align:center;padding:10px 12px">₫321.989</td><td style="text-align:center;padding:10px 12px">₫21.466/ngày</td><td style="text-align:center;padding:10px 12px;color:var(--text-muted)">Đã dừng</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:14px;font-size:14px;color:var(--text-muted)">DM campaign chi ₫190K/ngày — chiếm 51% tổng budget. Với frequency 2,51, nếu không đổi creative thì ₫190K/ngày sẽ ngày càng kém hiệu quả hơn.</p>
+  </div>
+
+  <div class="coll-header" onclick="toggleColl(this)">
+    <span class="coll-title">🔥 Creative Fatigue — Mức độ nhàm chán của quảng cáo</span>
+    <span class="coll-arrow">▼</span>
+  </div>
+  <div class="coll-body">
+    <table style="width:100%;font-size:14px;border-collapse:collapse;margin-bottom:14px">
+      <thead><tr>
+        <th style="text-align:left;padding:8px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border)">Campaign</th>
+        <th style="text-align:center;padding:8px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border)">Frequency</th>
+        <th style="text-align:center;padding:8px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border)">Mức độ</th>
+        <th style="text-align:left;padding:8px;font-size:12px;color:var(--text-muted);border-bottom:1px solid var(--border)">Hành động</th>
+      </tr></thead>
+      <tbody>
+        <tr><td style="padding:9px 8px;color:var(--positive)">Teaser Copy</td><td style="text-align:center;padding:9px 8px">1,31</td><td style="text-align:center;padding:9px 8px"><span class="vb vb-great">🟢 An toàn</span></td><td style="padding:9px 8px;color:var(--text-muted)">Tiếp tục bình thường</td></tr>
+        <tr><td style="padding:9px 8px;color:var(--text-secondary)">Brand Intro</td><td style="text-align:center;padding:9px 8px">1,29</td><td style="text-align:center;padding:9px 8px"><span class="vb vb-great">🟢 An toàn</span></td><td style="padding:9px 8px;color:var(--text-muted)">Đã dừng — không cần lo</td></tr>
+        <tr style="background:rgba(201,169,110,0.07)"><td style="padding:9px 8px;color:var(--warning)">DM Warm ⚠</td><td style="text-align:center;padding:9px 8px"><strong style="color:var(--warning)">2,51</strong></td><td style="text-align:center;padding:9px 8px"><span class="vb vb-ok">🟡 Theo dõi</span></td><td style="padding:9px 8px;color:var(--warning)">Đổi creative trong 7–10 ngày</td></tr>
+      </tbody>
+    </table>
+    <p><strong style="color:var(--text-primary)">Quy tắc đơn giản:</strong> Nếu Frequency > 2,5 VÀ CTR giảm > 20% so với tuần đầu → đổi creative ngay. DM đang ở 2,51 — chuẩn bị creative mới ngay bây giờ để không bị gián đoạn khi phải đổi.</p>
+  </div>
+
+  <div class="coll-header" onclick="toggleColl(this)">
+    <span class="coll-title">📊 ROI Assessment — ₫4,88M có hợp lý không?</span>
+    <span class="coll-arrow">▼</span>
+  </div>
+  <div class="coll-body">
+    <p><strong style="color:var(--gold)">Câu hỏi: ₫4,88M chi trong tháng 6 có xứng đáng không?</strong></p>
+    <br>
+    <p><strong style="color:var(--positive)">Awareness (₫2,41M — 49% budget):</strong> Đưa BABONG vào tầm nhìn ~55K người mới, 2.581 lượt "ghé cửa hàng", ~195 IG followers mới. CPM ₫20K–44K trong khi benchmark ₫70K–180K — <strong style="color:var(--positive)">RẤT hợp lý.</strong></p>
+    <br>
+    <p><strong style="color:var(--warning)">DM (₫2,47M — 51% budget):</strong> 67 tin nhắn → 5 đơn hàng. Cost/msg ₫36.943, cost/đơn ₫495.000. Nếu AOV (giá trị đơn hàng trung bình) của BABONG > ₫2M thì ROI dương (~4x). Nếu AOV < ₫1M thì cần tối ưu lại tỉ lệ chuyển đổi trước khi scale DM.</p>
+    <br>
+    <p style="color:var(--text-muted)"><strong style="color:var(--text-secondary)">Kết luận:</strong> Budget tháng 6 hợp lý về chi phí per-metric. Để đánh giá ROI đầy đủ cần biết: AOV thực tế của 5 đơn hàng đó là bao nhiêu?</p>
+  </div>
+
+</div><!-- /tab-overview -->
+
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- TAB B: AWARENESS & TRAFFIC                       -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-awareness">
+
+  <div class="section-title">Hiệu suất Chiến dịch — Awareness &amp; Traffic · 4 campaigns</div>
+  <div class="obj-filter">
+    <button class="obj-btn active" onclick="filterObjective('all', this)">Tất cả</button>
+    <button class="obj-btn" onclick="filterObjective('traffic', this)">Traffic — Kéo click</button>
+    <button class="obj-btn" onclick="filterObjective('engagement', this)">Engagement — Awareness</button>
+  </div>
+
+  <div class="table-wrap">
+    <table id="campaignTable">
+      <thead>
+        <tr>
+          <th>Chiến dịch</th>
+          <th><span class="tip" data-tip="Mục tiêu tối ưu mà Meta dùng để phân phối quảng cáo">Objective</span></th>
+          <th>Trạng thái</th>
+          <th onclick="sortTable('campaignTable',3)"><span class="tip" data-tip="Tổng tiền đã chi">Spend ↕</span></th>
+          <th onclick="sortTable('campaignTable',4)"><span class="tip" data-tip="Số người không trùng lặp đã thấy quảng cáo — từ Meta MCP">Reach ↕</span></th>
+          <th onclick="sortTable('campaignTable',5)"><span class="tip" data-tip="Số lần quảng cáo được hiển thị — 1 người có thể thấy nhiều lần">Impressions ↕</span></th>
+          <th onclick="sortTable('campaignTable',6)"><span class="tip" data-tip="Tỉ lệ người click vào link trong quảng cáo. Benchmark ngành: 0,8–2,5%. Trên 2,5% là tốt">CTR ↕</span></th>
+          <th onclick="sortTable('campaignTable',7)"><span class="tip" data-tip="Chi phí cho mỗi lượt click. Benchmark: ₫5.000–30.000. Càng thấp càng tốt">CPC ↕</span></th>
+          <th onclick="sortTable('campaignTable',8)"><span class="tip" data-tip="Chi phí để tiếp cận 1.000 người. Benchmark: ₫70.000–180.000. Dưới ₫70.000 là xuất sắc">CPM ↕</span></th>
+          <th><span class="tip" data-tip="Trung bình mỗi người thấy quảng cáo bao nhiêu lần. Trên 3,0 là nguy hiểm — người xem bắt đầu nhàm chán">Frequency</span></th>
+          <th><span class="tip" data-tip="Số kết quả đạt được (profile visit hoặc landing page view) và chi phí mỗi kết quả — benchmark tốt: dưới ₫1.000">Kết quả · CPR</span></th>
+          <th>CTR vs Benchmark</th>
+          <th>CPM vs Benchmark</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="winner-row" data-obj="engagement">
+          <td class="td-name">⭐ Teaser — Cold Aud<small>Awareness campaign đầu tiên · 07–11/06 · Đã hoàn thành</small></td>
+          <td><span class="tag-obj tag-engagement">Engagement</span></td>
+          <td><span class="status-paused">⏸ Đã dừng</span></td>
+          <td>₫771.310</td><td>11.319</td><td>17.597</td>
+          <td><strong style="color:var(--positive)">4,68%</strong></td>
+          <td>₫937</td><td>₫43.832</td><td>1,55</td>
+          <td>966 visits · <span class="bm-good">₫798</span></td>
+          <td><span class="vb vb-great">↑ Vượt xa</span></td>
+          <td><span class="vb vb-great">↑ Tốt hơn 62%</span></td>
+        </tr>
+        <tr data-obj="engagement">
+          <td class="td-name">Teaser Copy — Cold Aud<small>Mở rộng Awareness · 17/06–nay · Đang chạy</small></td>
+          <td><span class="tag-obj tag-engagement">Engagement</span></td>
+          <td><span class="status-active">● Đang chạy</span></td>
+          <td>₫1.051.540</td><td>19.015</td><td>24.784</td>
+          <td><strong style="color:var(--positive)">3,18%</strong></td>
+          <td>₫1.333</td><td>₫42.428</td><td>1,31</td>
+          <td>902 visits · <span class="bm-warn">₫1.166</span></td>
+          <td><span class="vb vb-great">↑ Vượt benchmark</span></td>
+          <td><span class="vb vb-great">↑ Tốt hơn 61%</span></td>
+        </tr>
+        <tr data-obj="traffic">
+          <td class="td-name">Brand Intro — Cold Aud<small>Traffic campaign · 12/06–nay · Đã dừng</small></td>
+          <td><span class="tag-obj tag-traffic">Traffic</span></td>
+          <td><span class="status-paused">⏸ Đã dừng</span></td>
+          <td>₫261.257</td><td>10.166</td><td>13.082</td>
+          <td><strong style="color:var(--positive)">2,36%</strong></td>
+          <td>₫845</td><td>₫19.971</td><td>1,29</td>
+          <td>377 visits · <span class="bm-good">₫693</span></td>
+          <td><span class="vb vb-ok">≈ Benchmark</span></td>
+          <td><span class="vb vb-great">↑ Tốt hơn 71%</span></td>
+        </tr>
+        <tr data-obj="traffic">
+          <td class="td-name">Brand Intro Copy — Cold Aud<small>2 phiên bản test (Engagement + Traffic) · Đã dừng</small></td>
+          <td><span class="tag-obj tag-traffic">Traffic+Eng</span></td>
+          <td><span class="status-paused">⏸ Đã dừng</span></td>
+          <td>₫321.989</td><td>13.758</td><td>16.616</td>
+          <td>1,82%</td>
+          <td>₫1.066</td><td>₫19.378</td><td>1,27</td>
+          <td>336 kq · <span class="bm-warn">₫958</span></td>
+          <td><span class="vb vb-ok">≈ Benchmark</span></td>
+          <td><span class="vb vb-great">↑ Tốt hơn 72%</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="conclusion">
+    <div class="conclusion-title">📊 Kết luận — Awareness &amp; Traffic</div>
+    <div class="conclusion-grid">
+      <div>
+        <div class="ci-label">Chi phí có hợp lý không?</div>
+        <div class="ci-body good"><strong>Rất hợp lý.</strong> CPM ₫20K–44K trong khi benchmark ₫70K–180K. Với ₫2,41M chi, BABONG tiếp cận ~55K người và tạo 2.581 lượt "ghé cửa hàng". Mỗi lượt chỉ tốn ~₫933 — xuất sắc cho trang sức mid-high end.</div>
+      </div>
+      <div>
+        <div class="ci-label">Teaser vs Teaser Copy</div>
+        <div class="ci-body">Teaser gốc thắng về CTR (4,68% vs 3,18%) và CPR (₫798 vs ₫1.166). Nhưng Teaser Copy đang scale lớn hơn và active. <strong>Test thêm 1 creative mới trong Teaser Copy để tìm angle có thể đạt CTR > 4%.</strong></div>
+      </div>
+      <div>
+        <div class="ci-label">Brand Intro: CPM thắng, CTR cần cải thiện</div>
+        <div class="ci-body">CPM ₫20K — thấp nhất account. Nhưng CTR 1,82–2,36% chỉ ở mức benchmark. <strong>Thử video ngắn 15s hoặc carousel storytelling</strong> để nâng CTR > 3% nếu resume Brand Intro trong tháng 7.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tab-awareness -->
+
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- TAB C: DM CAMPAIGN                               -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-dm">
+
+  <div class="section-title">Chiến dịch DM — Warm Audience · OT Launch <span style="font-size:14px;color:var(--gold);font-family:var(--font-body)">[₫2.475.168 · 14/06–nay · Active]</span></div>
+  <p style="color:var(--text-muted);font-size:14px;margin-bottom:20px;">Campaign này nhắm vào <strong style="color:var(--text-primary)">warm audience</strong> — người đã biết BABONG — để kéo họ chủ động nhắn tin hỏi mua. KPI quan trọng nhất: <span class="tip" data-tip="Chi phí để có 1 người chủ động nhắn tin hỏi mua hàng. Benchmark VN jewelry: ₫30K–60K"><strong style="color:var(--gold)">Cost per New Message Contact</strong></span>, không phải CTR hay CPM.</p>
+
+  <!-- Mini Funnel -->
+  <div class="funnel-wrap">
+    <div class="funnel-title">📊 Funnel DM Campaign — từ Budget đến Đơn hàng</div>
+    <div class="funnel">
+      <div class="funnel-step">
+        <div class="funnel-box">
+          <div class="funnel-val">₫2,47M</div>
+          <div class="funnel-label">Tổng chi tiêu DM</div>
+        </div>
+      </div>
+      <div class="funnel-step">
+        <div class="funnel-box">
+          <div class="funnel-val">15.253</div>
+          <div class="funnel-label">Warm Audience Reach</div>
+        </div>
+      </div>
+      <div class="funnel-step">
+        <div class="funnel-box highlight">
+          <div class="funnel-val">67</div>
+          <div class="funnel-label">New Messaging Contacts</div>
+          <div class="funnel-pct">Cost/msg ₫36.943</div>
+        </div>
+      </div>
+      <div class="funnel-step">
+        <div class="funnel-box alert-box">
+          <div class="funnel-val" style="color:var(--positive)">5</div>
+          <div class="funnel-label">Đơn hàng chốt được</div>
+          <div class="funnel-pct" style="color:var(--positive)">Cost/đơn ₫495K</div>
+        </div>
+      </div>
+      <div class="funnel-step">
+        <div class="funnel-box warn-box">
+          <div class="funnel-val" style="color:var(--warning)">7,5%</div>
+          <div class="funnel-label">Tỉ lệ chuyển đổi</div>
+          <div class="funnel-pct">Mục tiêu: 15–20%</div>
+        </div>
+      </div>
+    </div>
+    <div class="funnel-gap">
+      <strong>Gap cần cải thiện:</strong> 62 người trong số 67 đã nhắn tin nhưng chưa mua. Bottleneck nằm ở giai đoạn <strong>tin nhắn → đơn hàng</strong>, không phải ở ads. Chi phí ads đã hợp lý — vấn đề là quy trình xử lý DM sau khi có lead. Xem gợi ý cải thiện tại Tab A → "Cải thiện tỉ lệ chuyển đổi".
+    </div>
+  </div>
+
+  <!-- DM Ad Set Table -->
+  <div class="section-title" style="margin-top:28px">Hiệu suất theo Ad Set</div>
+  <div class="table-wrap">
+    <table id="dmTable">
+      <thead>
+        <tr>
+          <th>Ad Set (Nhóm quảng cáo)</th>
+          <th>Trạng thái</th>
+          <th onclick="sortTable('dmTable',2)"><span class="tip" data-tip="Tổng tiền đã chi cho ad set này">Spend ↕</span></th>
+          <th onclick="sortTable('dmTable',3)"><span class="tip" data-tip="Số người tiếp cận được trong warm audience">Reach ↕</span></th>
+          <th onclick="sortTable('dmTable',4)"><span class="tip" data-tip="Tần suất — cao hơn 3,0 là nguy hiểm, warm audience có giới hạn số người">Freq. ↕</span></th>
+          <th onclick="sortTable('dmTable',5)"><span class="tip" data-tip="CTR thấp ở DM campaign là bình thường — Meta optimize cho tin nhắn, không phải click">CTR ↕</span></th>
+          <th onclick="sortTable('dmTable',6)"><span class="tip" data-tip="Số người nhắn tin hỏi mua lần đầu tiên — đây là KPI quan trọng nhất của DM campaign">New Msg Contacts ↕</span></th>
+          <th onclick="sortTable('dmTable',7)"><span class="tip" data-tip="Chi phí để có 1 người nhắn tin. Benchmark VN jewelry: dưới ₫30K là tốt, ₫30K–60K chấp nhận, trên ₫60K cần xem lại">Cost / Msg ↕</span></th>
+          <th>Cost/Msg vs Benchmark</th>
+          <th>Nhận xét</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="winner-row">
+          <td class="td-name">⭐ Warm — Ad set chính<small>Ngân sách lõi · đang active · nên duy trì</small></td>
+          <td><span class="status-active">● Active</span></td>
+          <td>₫1.903.914</td><td>19.973</td><td>~1,9</td>
+          <td>0,61%</td>
+          <td><strong style="color:var(--positive)">55 contacts</strong></td>
+          <td><strong style="color:var(--positive)">₫34.617</strong></td>
+          <td><span class="vb vb-ok">⚠ Chấp nhận</span></td>
+          <td>Ad set hiệu quả nhất · Duy trì + refresh creative</td>
+        </tr>
+        <tr>
+          <td class="td-name">⭐ Warm — 18-24<small>Cost/msg thấp nhất · tiềm năng scale</small></td>
+          <td><span class="status-paused">⏸ Inactive</span></td>
+          <td>₫204.878</td><td>3.361</td><td>~1,8</td>
+          <td>0,80%</td>
+          <td><strong style="color:var(--positive)">7 contacts</strong></td>
+          <td><strong style="color:var(--positive)">₫29.268</strong></td>
+          <td><span class="vb vb-great">✓ Tốt nhất</span></td>
+          <td>Cost/msg dưới benchmark tốt · Scale budget × 2</td>
+        </tr>
+        <tr>
+          <td class="td-name">Warm — Copy<small>Đang cạnh tranh với ad set chính → nên tắt</small></td>
+          <td><span class="status-paused">⏸ Not delivering</span></td>
+          <td>₫310.587</td><td>2.572</td><td>—</td>
+          <td>0,59%</td>
+          <td>5 contacts</td>
+          <td><span style="color:var(--negative)">₫62.117</span></td>
+          <td><span class="vb vb-bad">✗ Quá cao</span></td>
+          <td>Đang lãng phí · TẮT NGAY · chuyển budget về Warm chính</td>
+        </tr>
+        <tr>
+          <td class="td-name">Warm — Copy 2<small>Không có kết quả · cần tắt</small></td>
+          <td><span class="status-paused">⏸ Not delivering</span></td>
+          <td>₫55.789</td><td>739</td><td>—</td>
+          <td>0,52%</td>
+          <td><strong style="color:var(--negative)">0 contacts</strong></td>
+          <td><span style="color:var(--negative)">N/A</span></td>
+          <td><span class="vb vb-bad">✗ Không hiệu quả</span></td>
+          <td>₫55.789 không tạo ra kết quả · TẮT NGAY</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="conclusion">
+    <div class="conclusion-title">📊 Kết luận — DM Warm Audience Campaign</div>
+    <div class="conclusion-grid">
+      <div>
+        <div class="ci-label">₫2,47M có hợp lý không?</div>
+        <div class="ci-body"><strong>Phần nào hợp lý.</strong> 67 new messaging contacts với cost/msg ₫36.943 trong benchmark ₫30K–60K. Nhưng 5 đơn từ 67 tin nhắn (7,5%) là thấp — bottleneck ở khâu xử lý DM, không phải ở ads. Cần cải thiện quy trình phản hồi trước khi tăng ngân sách DM.</div>
+      </div>
+      <div>
+        <div class="ci-label">Vấn đề cấp bách: Frequency 2,51</div>
+        <div class="ci-body warn"><strong>Warm audience đang gần bão hòa.</strong> Nếu tiếp tục chạy mà không đổi creative, CTR sẽ giảm và cost/msg sẽ tăng nhanh. <strong>Hành động: Đổi creative DM trong 7–10 ngày tới.</strong> Chuẩn bị 2–3 creative video mới ngay tuần này.</div>
+      </div>
+      <div>
+        <div class="ci-label">Tối ưu budget DM ngay hôm nay</div>
+        <div class="ci-body">TẮT "Warm – Copy" (₫62K/msg) và "Warm – Copy 2" (0 kết quả) — đang lãng phí ~₫366K. Chuyển về <strong>"Warm – 18-24" (₫29.268/msg)</strong> và ad set chính. Cải thiện tức thì không cần đổi creative.</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tab-dm -->
+
+</div><!-- /container -->
+
+<div class="footer">
+  BABONG Jewelry · Ads Performance Dashboard · Tháng 6/2026 · Full Refresh 27/06<br>
+  Meta MCP (Live) + CSV Export 01–27/06 · KPI Framework v1.1 (bổ sung Cost/Msg + Cost/Profile Visit)<br>
+  Phân tích bởi: Digital Marketing Expert · Thị trường mid-high end jewelry Việt Nam
+</div>
+
+<script>
+// ── TAB SWITCHING ──
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+}
+
+// ── CHARTS ──
+const brandColors = {
+  gold:   'rgba(193,104,54,0.8)',
+  green:  'rgba(127,185,138,0.8)',
+  muted:  'rgba(64,46,42,0.9)',
+  light:  'rgba(226,220,208,0.4)',
+  purple: 'rgba(150,100,200,0.7)',
+  warn:   'rgba(201,169,110,0.8)',
+};
+const chartBase = {
+  responsive: true, maintainAspectRatio: true,
+  plugins: {
+    legend: { display: false },
+    tooltip: { backgroundColor: '#241710', borderColor: '#402E2A', borderWidth: 1, titleColor: '#E2DCD0', bodyColor: '#c4bdb5', titleFont: { size: 13 }, bodyFont: { size: 13 } }
+  },
+  scales: {
+    x: { ticks: { color: '#9e9089', font: { size: 12 } }, grid: { color: 'rgba(64,46,42,0.3)' } },
+    y: { ticks: { color: '#9e9089', font: { size: 12 } }, grid: { color: 'rgba(64,46,42,0.3)' } }
+  }
+};
+
+const benchmarkPlugin = {
+  id: 'benchmark',
+  afterDraw(chart) {
+    const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+    if (!y) return;
+    const bm = y.getPixelForValue(2.5);
+    ctx.save();
+    ctx.strokeStyle = 'rgba(201,169,110,0.5)';
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(left, bm); ctx.lineTo(right, bm); ctx.stroke();
+    ctx.fillStyle = 'rgba(201,169,110,0.8)';
+    ctx.font = '12px DM Sans, sans-serif';
+    ctx.fillText('Benchmark 2,5%', left + 6, bm - 5);
+    ctx.restore();
+  }
+};
+
+new Chart(document.getElementById('ctrChart'), {
+  type: 'bar',
+  plugins: [benchmarkPlugin],
+  data: {
+    labels: ['Teaser\n(Dừng)', 'Teaser Copy\n(Active)', 'Brand Intro\n(Dừng)', 'Brand Intro\nCopy', 'DM Warm\n(Active)*'],
+    datasets: [{
+      label: 'CTR (%)',
+      data: [4.68, 3.18, 2.36, 1.82, 0.62],
+      backgroundColor: [brandColors.muted, brandColors.gold, brandColors.green, 'rgba(127,185,138,0.4)', brandColors.purple],
+      borderColor: ['#402E2A', '#C16836', '#7fb98a', '#7fb98a', '#b09ad4'],
+      borderWidth: 1, borderRadius: 4,
+    }]
+  },
+  options: { ...chartBase,
+    plugins: { ...chartBase.plugins, tooltip: { ...chartBase.plugins.tooltip, callbacks: { label: ctx => ` CTR: ${ctx.raw}%${ctx.dataIndex === 4 ? ' (*DM: objective khác)' : ''}` } } },
+    scales: { ...chartBase.scales, y: { ...chartBase.scales.y, min: 0, max: 6, ticks: { ...chartBase.scales.y.ticks, callback: v => v + '%' } } }
+  }
+});
+
+new Chart(document.getElementById('spendChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['DM Warm (Active)', 'Teaser Copy (Active)', 'Teaser Gốc (Dừng)', 'Brand Intro Copy', 'Brand Intro'],
+    datasets: [{
+      data: [2475168, 1051540, 771310, 321989, 261257],
+      backgroundColor: [brandColors.purple, brandColors.gold, brandColors.muted, 'rgba(127,185,138,0.4)', brandColors.green],
+      borderColor: ['#b09ad4', '#C16836', '#402E2A', '#7fb98a', '#7fb98a'],
+      borderWidth: 1,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: true, cutout: '55%',
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { color: '#9e9089', font: { size: 12 }, boxWidth: 12, padding: 10 } },
+      tooltip: { backgroundColor: '#241710', borderColor: '#402E2A', borderWidth: 1, titleColor: '#E2DCD0', bodyColor: '#c4bdb5',
+        callbacks: { label: ctx => ` ₫${ctx.raw.toLocaleString('vi-VN')} (${(ctx.raw/4881264*100).toFixed(0)}%)` } }
+    }
+  }
+});
+
+// ── OBJECTIVE FILTER (Tab B) ──
+function filterObjective(obj, btn) {
+  btn.closest('.obj-filter').querySelectorAll('.obj-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#campaignTable tbody tr').forEach(r => {
+    r.classList.toggle('hidden', obj !== 'all' && r.dataset.obj !== obj);
+  });
+}
+
+// ── SORT ──
+function sortTable(id, col) {
+  const tbl = document.getElementById(id);
+  const tbody = tbl.querySelector('tbody');
+  const rows = [...tbody.querySelectorAll('tr')];
+  const asc = tbl.dataset.sort === String(col);
+  tbl.dataset.sort = asc ? '' : String(col);
+  rows.sort((a, b) => {
+    const av = parseFloat((a.cells[col]?.textContent || '').replace(/[₫.,\s%\w→]/g, '').replace(',', '.')) || 0;
+    const bv = parseFloat((b.cells[col]?.textContent || '').replace(/[₫.,\s%\w→]/g, '').replace(',', '.')) || 0;
+    return asc ? bv - av : av - bv;
+  });
+  rows.forEach(r => tbody.appendChild(r));
+}
+
+// ── COLLAPSE ──
+function toggleColl(header) {
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('.coll-arrow');
+  const open = body.classList.toggle('open');
+  arrow.classList.toggle('open', open);
+}
+
+// ── REFRESH ──
+function handleRefresh() {
+  if (typeof window.sendPrompt === 'function') {
+    window.sendPrompt('Refresh BABONG ads dashboard — pull dữ liệu mới nhất từ Meta Ads MCP cho tháng 6/2026.');
+  } else {
+    alert('Để cập nhật: gõ "refresh dashboard" trong chat để pull data mới nhất từ Meta Ads MCP.');
+  }
+}
+</script>
+</body>
+</html>
